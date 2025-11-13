@@ -1,8 +1,8 @@
-/*
- *
+/**
+ * Alaa Khan
  * CEN 3024C - 13950 - Software Development 1
- * October 26, 2025
- * allPatients.java
+ * November 12, 2025
+ * PatientDBManager.java
  *
  * This is a utility class; it contains all the functions used in the program: the CRUD functions. These are to add,
  * remove, update, and display the total number of patients, as well as a custom function that counts the total number
@@ -11,38 +11,77 @@
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.sql.*;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 import java.util.StringTokenizer;
 
-public class allPatients {
-    Scanner input = new Scanner(System.in);
+public class PatientDBManager {
     ArrayList<patient> patientsList = new ArrayList<patient>();
 
-    /* GUI: C: CREATE
-     When adding a patient manually, the user will enter the ID, name, address, doctor, insurance, and
-     attending day of the patient in the GUI and send that information over to this method.
-     Here, the ID and days attending are checked because they need to meet certain requirements.
-     After ensuring it meets the requirements, this method adds the patient to the list.
-    */
-    public void addPatient(patient p) throws IllegalArgumentException {
+    /**
+     * @param rs Contains the patient data needed to be extracted to create a patient object.
+     * @throws SQLException In case the connection with the server is interrupted
+     *
+     * This is a helper method. It sets the ResultSet row into a Patient Object.
+      */
+    private patient createPatientFromResultSet(ResultSet rs) throws SQLException {
+        patient p = new patient();
+        p.setID(rs.getString("ID"));
+        p.setName(rs.getString("Name"));
+        p.setAddress(rs.getString("Address"));
+        p.setDoctor(rs.getString("Doctor"));
+        p.setInsurance(rs.getString("Insurance"));
+        String day = rs.getString("Day_Attending");
+        p.setDayAttending(day.charAt(0));
+
+        return p;
+    }
+
+    /**
+     * C: CREATE:
+     * @param p The patient object needed to establish the patient object.
+     * @throws SQLException In case the connection with the server is interrupted
+     * @throws IllegalArgumentException In case the input does not meet the attribute requirements
+     *
+     * This method is used when manually adding a single patient into the system. Calls the checker methods to ensure
+     * the entered ID and Day are valid. In order to integrate the action of adding the patient object into the system,
+     * the SQL statement for adding a patient is set into a String that is then called once the patient needs to be added.
+     */
+    public void addPatient(patient p) throws SQLException, IllegalArgumentException {
         if (p.getID().length() != 7 || !checkIfAllInts(p.getID())) {
             throw new IllegalArgumentException("The ID must be 7 digits exactly containing only digits"); }
-        if (checkIfExists(p.getID())) {
-            throw new IllegalArgumentException("This ID already exists"); }
 
         if (!validDay(String.valueOf(p.getDayAttending()))) {
             throw new IllegalArgumentException("The day attending is not valid. Please enter a valid day attending (M, T, W, R, F)"); }
 
-        patientsList.add(p);
+        String sql = "INSERT INTO patients (ID, Name, Address, Doctor, Insurance, Day_attending) VALUES (?,?,?,?,?,?)";
+        try (Connection conn = DBConnectionManager.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, p.getID());
+            ps.setString(2, p.getName());
+            ps.setString(3, p.getAddress());
+            ps.setString(4, p.getDoctor());
+            ps.setString(5, p.getInsurance());
+            ps.setString(6, String.valueOf(p.getDayAttending()));
+
+            int affectedRows = ps.executeUpdate();
+            if (affectedRows == 0) {
+                throw new SQLException("Failed to insert patient, no rows were affected.");
+            }
+        }
     }
 
 
 
-    /*
-     Takes in the inputted ID and loops through each character to ensure they are all integers. If they are, it
-     returns a "true" statement to the IDChecker, allowing for the code to continue. Else, it will return "false" and
-     cause the ID Checker to restart and ask for a different ID.
+    /**
+     * @param patientID The patient ID that the user inputted.
+     * @return Whether the requirement is successful or not, a boolean (true or false) is returned.
+     *
+     * Takes in the inputted ID and loops through each character to ensure they are all integers. If they are, it
+     * returns a "true" statement to the IDChecker, allowing for the code to continue. Else, it will return "false" and
+     * cause the ID Checker to restart and ask for a different ID.
     */
     public boolean checkIfAllInts(String patientID) {
 //        for (char c : patientID.toCharArray()) {
@@ -56,25 +95,14 @@ public class allPatients {
         return patientID.matches("\\d+");
     }
 
-    /*
-     Takes in the inputted ID and loops through each character to ensure it does not already exist in the system. If
-     it does, it returns a "true" statement to the IDChecker, cause the ID Checker to restart and ask for a different ID.
-     Else, it will return "false" and allow for the code to continue.
-    */
-    public boolean checkIfExists(String patientID) {
-        for (int i = 0; i < patientsList.size(); i++) {
-            if (patientsList.get(i).getID().equals(patientID)) {
-                return true;
-            }
-        }
-        return false;
-    }
 
-
-    /*
-   Takes in the inputted day as a String and converts it to a char. If it does not contain any letters, it will
-   return a "true" statement to the dayChecker() method, allowing for the code to continue. Else, it will return
-   "false" and cause the dayChecker() method to restart and ask for a different day
+    /**
+     * @param patientDay The patient's day of attendance that the user inputted.
+     * @return Whether the requirement is successful or not, a boolean (true or false) is returned.
+     *
+     * Takes in the inputted day as a String and converts it to a char. If it does not contain any letters, it will
+     * return a "true" statement to the dayChecker() method, allowing for the code to continue. Else, it will return
+     * "false" and cause the dayChecker() method to restart and ask for a different day
    */
     public boolean checkIfChar(String patientDay){
         char c = patientDay.charAt(0);
@@ -85,10 +113,13 @@ public class allPatients {
         }
     }
 
-    /*
-     Takes in the inputted day as a String. If it is one of the acceptable days of attendance, it will return a "true"
-     statement to the dayChecker() method, allowing for the code to continue. Else, it will return "false" and cause
-     the dayChecker() method to restart and ask for a different day
+    /**
+     *  @param patientDay The patient's day of attendance that the user inputted.
+     *  @return Whether the requirement is successful or not, a boolean (true or false) is returned.
+     *
+     * Takes in the inputted day as a String. If it is one of the acceptable days of attendance, it will return a "true"
+     * statement to the dayChecker() method, allowing for the code to continue. Else, it will return "false" and cause
+     * the dayChecker() method to restart and ask for a different day
      */
     public boolean validDay(String patientDay){
         String c = patientDay;
@@ -100,44 +131,52 @@ public class allPatients {
     }
 
 
-    /*
-     GUI C: CREATE ...cont'd
-     This method receives a filepath from the GUI. Assuming the data is in the following format
-     "ID-Name-Address-Doctor-Insurance-Day", it will set the inputted data to its associating fields of ID, Name,
-     Address, Doctor, Insurance, and Day, before adding it all to the list of patient. The tokenizer is to recognize
-     the split between field and detect the range of information to take in per field. It specifies that the divider it
-     is looking for is going to be the "-" dash. Should the inputted filepath not work, an error is thrown.
-
-     There is also a counter to keep track of how many patients from the file are being added to the list. This number is
-     then sent back to the PatientGUI class.
+    /**
+     * C: CREATE ...cont'd
+     * @param filepath The filepath of the location of the textfile containing patient data that needs to be batch-added.
+     * @return The integer amount of patients that were successfully added from the textfile into the system.
+     * @throws Exception Covers both SQLException and IllegalArgumentException should either a validation error
+     * OR database error arises (such as a duplicate ID or database connection issues)
+     *
+     * This method receives a filepath from the GUI. Assuming the data is in the following format
+     * "ID-Name-Address-Doctor-Insurance-Day", it will set the inputted data to its associating fields of ID, Name,
+     * Address, Doctor, Insurance, and Day, before adding it all to the list of patient. The tokenizer is to recognize
+     * the split between field and detect the range of information to take in per field. It specifies that the divider it
+     * is looking for is going to be the "-" dash. Should the inputted filepath not work, an error is thrown.
+     *
+     * There is also a counter to keep track of how many patients from the file are being added to the list. This number is
+     * then sent back to the PatientGUI class.
       */
     public int addPatientFromTxtFile(String filepath) throws Exception{
         int count = 0;
         File file = new File(filepath);
         if (!file.exists()) {
-            throw new java.io.FileNotFoundException("File Not Found");
+            throw new FileNotFoundException("File Not Found");
         }
+
 
         Scanner scanner = new Scanner(file);
         while (scanner.hasNextLine()) {
             String line = scanner.nextLine();
-            StringTokenizer token = new StringTokenizer(line, "-");
 
-            if (token.countTokens() == 6){
-                try {
-                    patient p1 = new patient();
-                    p1.setID(token.nextToken());
-                    p1.setName(token.nextToken());
-                    p1.setAddress(token.nextToken());
-                    p1.setDoctor(token.nextToken());
-                    p1.setInsurance(token.nextToken());
-                    p1.setDayAttending(token.nextToken().charAt(0));
-
-                    addPatient(p1);
-                    count++;
-                } catch (Exception e){
-                    System.err.println("Skipped invalid patient record: " + line);
+            try {
+                StringTokenizer token = new StringTokenizer(line, "-");
+                if (token.countTokens() != 6) {
+                    throw new IllegalArgumentException("Incorrect number of attributes");
                 }
+
+                patient p1 = new patient();
+                p1.setID(token.nextToken());
+                p1.setName(token.nextToken());
+                p1.setAddress(token.nextToken());
+                p1.setDoctor(token.nextToken());
+                p1.setInsurance(token.nextToken());
+                p1.setDayAttending(token.nextToken().charAt(0));
+
+                addPatient(p1);
+                count++;
+                } catch (IllegalArgumentException | SQLException e) {
+                System.err.println("Skipped invalid patient record or failed DB insertion for line: \"" + line + "\". Error: " + e.getMessage());
             }
 
         }
@@ -145,14 +184,18 @@ public class allPatients {
         return count;
     }
 
-    /*
-    GUI: R: REMOVE
-    This class removes a patient based on their ID. It receives the patient ID and searches the list with a
-    simple for-loop. It first ensures that the ID entered meets the requirements of a valid ID before it performs the
-    function. Based on the result, a boolean answer of True or False is returned, determining the "success" of the removal
-    or not.
+    /**
+     * R: REMOVE
+     * @param patientID The patient ID that the user inputted needing to be removed.
+     * @return The integer amount of rows affected by the end of the method; ensures whether removal was successful or not.
+     * @throws SQLException In case the connection with the server is interrupted
+     *
+     * This class removes a patient based on their ID. It receives the patient ID and searches the list with a
+     * simple for-loop. It first ensures that the ID entered meets the requirements of a valid ID before it performs the
+     * function. In order to integrate the action of removing the patient object from the system, the SQL statement for
+     * removing a patient is set into a String that is then called once the patient needs to be removed.
      */
-    public boolean removePatientByID(String patientID) {
+    public boolean removePatientByID(String patientID) throws SQLException {
         if (patientID.length() != 7 || !checkIfAllInts(patientID)) {
             return false;
         }
@@ -165,97 +208,93 @@ public class allPatients {
             }
         }
 
-        if (patientToRemove != null) {
-            patientsList.remove(patientToRemove);
-            System.out.println("\nPatient ID: " + patientID + " removed");
-            return true;
-        } else {
-            System.out.println("\nPatient ID: " + patientID + " does not exist");
-            return false;
+        String sql = "DELETE FROM patients WHERE ID = ?";
+        try (Connection conn = DBConnectionManager.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, patientID);
+            int affectedRows = ps.executeUpdate();
+
+            return affectedRows > 0;
         }
+
     }
 
-    /*
-    GUI: U: UPDATE
-    This class takes receives the ID of the patient the user wants to change an attribute of. After making sure that it is
-    a valid ID, the specific attribute they want to update (that is also received) is used to run the switch case. Then, it
-    updates the attribute with the new info (that has been received). Finally, it sends back a boolean answer of True or False
-    determining the "success" of the update or not.
+    /**
+     * U: UPDATE
+     * @param patientID The patient ID that the user inputted needing to be updated.
+     * @param AttributeIndex An integer representing the index of the field that requires updating.
+     * @param newAtt A String statement that is the new information the user wants to replace the previously established
+     *               information with.
+     * @return The integer amount of rows affected by the end of the method; ensures whether removal was successful or not.
+     * @throws SQLException In case the connection with the server is interrupted
+     * @throws IllegalArgumentException In case the input does not meet the attribute requirements
+     *
+     * This class takes receives the ID of the patient the user wants to change an attribute of, the attribute index of
+     * the field that requires updating, and the new information they would like to replace with the previous established
+     * attribute. The specific attribute they want to update is used to run the switch case. Then, it updates the attribute
+     * with the new info (that has been received). In order to integrate the action of updating the patient's attribute
+     * from the system, the SQL statement for updating a patient's attribute is set into a String that is then called once
+     * the attribute needs to be updated.
      */
-    public boolean updatePatientByID(String patientID, int AttributeIndex, String newAtt) throws IllegalArgumentException {
-        patient patientToUpdate = null;
-        for (patient p : patientsList) {
-            if (p.getID().equals(patientID)) {
-                patientToUpdate = p;
-                break;
-            }
-        }
-        if (patientToUpdate == null) {
-            return false;
-        }
-
+    public boolean updatePatientByID(String patientID, int AttributeIndex, String newAtt) throws SQLException, IllegalArgumentException {
+        String fieldName;
         switch (AttributeIndex) {
-            case 1:
-                if (!newAtt.matches("^\\d{7}$")) {
-                    throw new IllegalArgumentException("IDs must be 7 digits, all integers, and not already in the system.");
-                }
-                if (checkIfExists(newAtt)) {
-                    throw new IllegalArgumentException("There is already a patient in the system with this ID");
-                }
-                patientToUpdate.setID(newAtt);
-                break;
-
-            case 2: patientToUpdate.setName(newAtt); break;
-
-            case 3: patientToUpdate.setAddress(newAtt); break;
-
-            case 4: patientToUpdate.setDoctor(newAtt); break;
-
-            case 5: patientToUpdate.setInsurance(newAtt); break;
-
-            case 6:
-                String day = newAtt.trim().toUpperCase();
-                if (day.length() != 1) {
-                    throw new IllegalArgumentException("Day must be a single character (M, T, W, R, F).");
-                }
-                if (!validDay(day)) {
-                    throw new IllegalArgumentException("Day must be a valid character (M, T, W, R, F).");
-                }
-
-                patientToUpdate.setDayAttending(newAtt.toUpperCase().charAt(0));
-                break;
+            case 1: fieldName = "ID"; break;
+            case 2: fieldName = "Name"; break;
+            case 3: fieldName = "Address"; break;
+            case 4: fieldName = "Doctor"; break;
+            case 5: fieldName = "Insurance"; break;
+            case 6: fieldName = "Day_attending"; if (newAtt.length() > 1) throw new IllegalArgumentException("Day must be a single character");
+            break;
 
             default:
                 return false;
         }
 
-        return true;
-    }
+        String sql = "UPDATE patients SET " + fieldName + " = ? WHERE ID = ?";
 
+        try (Connection conn = DBConnectionManager.getConnection();
+        PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, newAtt);
+            ps.setString(2, patientID);
 
-    /*D: DISPLAY
-    Loop to display patient from patientsList */
-    public String getPatientsListAsString() {
-        StringBuilder builder = new StringBuilder();
-        builder.append("CURRENT LIST OF PATIENTS:\n");
-        for (patient p : patientsList) {
-            builder.append("ID: ").append(p.getID())
-                    .append(", Name: ").append(p.getName())
-                    .append(", Address: ").append(p.getAddress())
-                    .append(", Doctor: ").append(p.getDoctor())
-                    .append(", Insurance: ").append(p.getInsurance())
-                    .append(", Day Attending: ").append(p.getDayAttending())
-                    .append("\n");
+            int affectedRows = ps.executeUpdate();
+            return affectedRows > 0; //Only true if a record was updated
+        } catch (SQLException e) {
+            throw e;
         }
-        return builder.toString();
     }
 
+    /**
+     * D: DISPLAY
+     * @return the List of patients in the system.
+     * @throws SQLException In case the connection with the server is interrupted
+     *
+     * Fetches all the patients currently in the system to display them in the JTable by creating a List of the
+     * patients, and then sending back the SQL Statement needed to display all the patients in that list into a String.
+     */
+    public List<patient> getAllPatients() throws SQLException {
+        List<patient> patients = new ArrayList<>();
+        String sql = "SELECT ID, Name, Address, Doctor, Insurance, Day_attending FROM patients ORDER by ID";
 
-    /*
-    Takes in the day of the week as a string. Sets a counter to 0, and then loops through the list of patients. Using
-    the getDayAttending(), every time it sees a match between the day the user inputted and the day a patient has set
-    to attend, the counter will increase. Once the end of the list is reached, it will return the total number of
-    attending patients for that day.
+        try (Connection conn = DBConnectionManager.getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            while (rs.next()) {
+                patients.add(createPatientFromResultSet(rs));
+            }
+        }
+        return patients;
+    }
+
+    /**
+     * @param day The day of the week as a String, as provided by the user.
+     * @param ListOfPatients The list of patients that will need to be iterated through to check for day matches.
+     * @return The total number of attending patients for the specified day.
+     *
+     * Sets a counter to 0, and then loops through the list of patients. Using the getDayAttending(), every time it sees
+     * a match between the day the user inputted and the day a patient has set to attend, the counter will increase.
+     * Once the end of the list is reached, it will return the total number of attending patients for that day.
      */
     public int patientCounter(String day, ArrayList<patient> ListOfPatients) {
         int attending = 0;
@@ -267,11 +306,16 @@ public class allPatients {
         return attending;
     }
 
-    /*
-    Receives the day of the week as a string. First, determines if the day meets the requirements for a valid Day. If so,
-    it begins a counter and sets it to the amount that patientCounter calculates for it. It then sends that amount back.
+    /**
+     * @param day The day of the week as a String, as provided by the user.
+     * @return The total number of attending patients for the specified day.
+     * @throws SQLException In case the connection with the server is interrupted
+     * @throws IllegalArgumentException In case the input does not meet the attribute requirements
+     *
+     * Receives the day of the week as a string. First, determines if the day meets the requirements for a valid Day. If so,
+     * it creates an SQL statement that will count the patients, and then send that amount back in the form of a String.
      */
-    public int getDayCount(String day) throws IllegalArgumentException {
+    public int getDayCount(String day) throws SQLException, IllegalArgumentException {
         if (day.length() != 1 || !checkIfChar(day)) {
             throw new IllegalArgumentException("Day must be a single Character (M, T, W, R, F).");
         }
@@ -280,8 +324,17 @@ public class allPatients {
         if (!validDay(dayUpper)) {
             throw new IllegalArgumentException("Day must be a valid day (M, T, W, R, F).");
         }
-
-        int dayCount = patientCounter(dayUpper, patientsList);
+        int dayCount = 0;
+        String sql = "SELECT COUNT(*) AS total FROM patients WHERE Day_attending = ?";
+        try (Connection conn = DBConnectionManager.getConnection();
+        PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, dayUpper);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    dayCount = rs.getInt("total");
+                }
+            }
+        }
 
         return dayCount;
     }

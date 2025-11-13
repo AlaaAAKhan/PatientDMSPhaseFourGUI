@@ -1,11 +1,20 @@
+/**
+ * CEN 3024C - 13950 - Software Development 1
+ * November 12, 2025
+ * DBConnectionManager.java
+ *
+ * This class is created specifically to establish the connection between the GUI and the mySQL server.
+ * It sets empty values for the URL, USER, and PASSWORD, and then later receives them from the user through the GUI.
+ * */
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
-public class DBSConnectionManager {
-    private static final String URL = "jdbc:mysql://localhost:3306/phasefour";
-    private static final String USER = "root";
-    private static final String PASSWORD = "123password";
+public class DBConnectionManager {
+    public static String URL = "";
+    public static String USER = "";
+    public static String PASSWORD = "";
 
     public static Connection getConnection() throws SQLException {
         try {
@@ -17,4 +26,12 @@ public class DBSConnectionManager {
 
         return DriverManager.getConnection(URL, USER, PASSWORD);
     }
+
+    public static void setConnectionParams(String newURL, String newUser, String newPassword) {
+        URL = newURL;
+        USER = newUser;
+        PASSWORD = newPassword;
+
+    }
+
 }
