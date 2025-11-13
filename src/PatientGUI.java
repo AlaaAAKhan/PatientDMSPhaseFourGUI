@@ -71,8 +71,8 @@ public class PatientGUI extends JFrame {
     }
 
     /**
-     * This method is for the tab used when the user wants to establish a connection between the GUI and a server.
      * @return The completed panel
+     * This method is for the tab used when the user wants to establish a connection between the GUI and a server.
      */
     private JPanel createConnectionPanel(){
         JPanel panel = new JPanel(new GridLayout(4, 2, 5, 5));
@@ -135,8 +135,8 @@ public class PatientGUI extends JFrame {
     }
 
     /**
-     * This method is for the tab used when the user wants to manually add a single patient into the system.
      * @return The completed panel
+     * This method is for the tab used when the user wants to manually add a single patient into the system.
      */
     private JPanel createAddPanel() {
         JPanel panel = new JPanel(new GridLayout(7, 2, 5, 5));
@@ -195,8 +195,8 @@ public class PatientGUI extends JFrame {
     }
 
     /**
-     * This method is for the tab used when the user wants to add a batch of patients based on information from a textfile.
      * @return The completed panel
+     * This method is for the tab used when the user wants to add a batch of patients based on information from a textfile.
      */
     private JPanel createTxtFilePanel() {
         JPanel panel = new JPanel(new BorderLayout(10, 10));
@@ -234,8 +234,8 @@ public class PatientGUI extends JFrame {
 
 
     /**
-     * This method is for the tab used when the user wants to remove a patient from the system.
      * @return The completed panel
+     * This method is for the tab used when the user wants to remove a patient from the system.
      */
     private JPanel createRemovePanel() {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
@@ -273,8 +273,8 @@ public class PatientGUI extends JFrame {
     }
 
     /**
-     * This method is for the tab used when the user wants to update one of a patient's attributes.
      * @return The completed panel
+     * This method is for the tab used when the user wants to update one of a patient's attributes.
      */
     private JPanel createUpdatePanel() {
         JPanel panel = new JPanel(new GridLayout(4, 2, 5, 5));
@@ -325,9 +325,9 @@ public class PatientGUI extends JFrame {
     }
 
     /**
+     * @return The completed panel
      * This method is for the tab used when the user wants to know the total amount of patients the can expect to attend
      * on a certain day, as specified by the user.
-     * @return The completed panel
      */
     private JPanel createCustomPanel() {
         JPanel panel = new JPanel(new BorderLayout(10, 10));

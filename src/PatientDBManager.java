@@ -40,14 +40,15 @@ public class PatientDBManager {
     }
 
     /**
-     * C: CREATE:
      * @param p The patient object needed to establish the patient object.
-     * @throws SQLException In case the connection with the server is interrupted
-     * @throws IllegalArgumentException In case the input does not meet the attribute requirements
+     * @throws SQLException In case the connection with the server is interrupted.
+     * @throws IllegalArgumentException In case the input does not meet the attribute requirements.
      *
+     * <p>C: CREATE
      * This method is used when manually adding a single patient into the system. Calls the checker methods to ensure
      * the entered ID and Day are valid. In order to integrate the action of adding the patient object into the system,
      * the SQL statement for adding a patient is set into a String that is then called once the patient needs to be added.
+     * </p>
      */
     public void addPatient(patient p) throws SQLException, IllegalArgumentException {
         if (p.getID().length() != 7 || !checkIfAllInts(p.getID())) {
@@ -132,12 +133,13 @@ public class PatientDBManager {
 
 
     /**
-     * C: CREATE ...cont'd
+     *
      * @param filepath The filepath of the location of the textfile containing patient data that needs to be batch-added.
      * @return The integer amount of patients that were successfully added from the textfile into the system.
      * @throws Exception Covers both SQLException and IllegalArgumentException should either a validation error
      * OR database error arises (such as a duplicate ID or database connection issues)
      *
+     * <p>C: CREATE ...cont'd
      * This method receives a filepath from the GUI. Assuming the data is in the following format
      * "ID-Name-Address-Doctor-Insurance-Day", it will set the inputted data to its associating fields of ID, Name,
      * Address, Doctor, Insurance, and Day, before adding it all to the list of patient. The tokenizer is to recognize
@@ -146,6 +148,7 @@ public class PatientDBManager {
      *
      * There is also a counter to keep track of how many patients from the file are being added to the list. This number is
      * then sent back to the PatientGUI class.
+     * </p>
       */
     public int addPatientFromTxtFile(String filepath) throws Exception{
         int count = 0;
@@ -185,15 +188,17 @@ public class PatientDBManager {
     }
 
     /**
-     * R: REMOVE
+     *
      * @param patientID The patient ID that the user inputted needing to be removed.
      * @return The integer amount of rows affected by the end of the method; ensures whether removal was successful or not.
      * @throws SQLException In case the connection with the server is interrupted
      *
+     * <p>R: REMOVE
      * This class removes a patient based on their ID. It receives the patient ID and searches the list with a
      * simple for-loop. It first ensures that the ID entered meets the requirements of a valid ID before it performs the
      * function. In order to integrate the action of removing the patient object from the system, the SQL statement for
      * removing a patient is set into a String that is then called once the patient needs to be removed.
+     * </p>
      */
     public boolean removePatientByID(String patientID) throws SQLException {
         if (patientID.length() != 7 || !checkIfAllInts(patientID)) {
@@ -220,21 +225,22 @@ public class PatientDBManager {
     }
 
     /**
-     * U: UPDATE
      * @param patientID The patient ID that the user inputted needing to be updated.
      * @param AttributeIndex An integer representing the index of the field that requires updating.
      * @param newAtt A String statement that is the new information the user wants to replace the previously established
      *               information with.
      * @return The integer amount of rows affected by the end of the method; ensures whether removal was successful or not.
-     * @throws SQLException In case the connection with the server is interrupted
-     * @throws IllegalArgumentException In case the input does not meet the attribute requirements
+     * @throws SQLException In case the connection with the server is interrupted.
+     * @throws IllegalArgumentException In case the input does not meet the attribute requirements.
      *
+     * <p>U: UPDATE
      * This class takes receives the ID of the patient the user wants to change an attribute of, the attribute index of
      * the field that requires updating, and the new information they would like to replace with the previous established
      * attribute. The specific attribute they want to update is used to run the switch case. Then, it updates the attribute
      * with the new info (that has been received). In order to integrate the action of updating the patient's attribute
      * from the system, the SQL statement for updating a patient's attribute is set into a String that is then called once
      * the attribute needs to be updated.
+     * </p>
      */
     public boolean updatePatientByID(String patientID, int AttributeIndex, String newAtt) throws SQLException, IllegalArgumentException {
         String fieldName;
@@ -266,12 +272,13 @@ public class PatientDBManager {
     }
 
     /**
-     * D: DISPLAY
      * @return the List of patients in the system.
      * @throws SQLException In case the connection with the server is interrupted
      *
+     * <p>D: DISPLAY
      * Fetches all the patients currently in the system to display them in the JTable by creating a List of the
      * patients, and then sending back the SQL Statement needed to display all the patients in that list into a String.
+     * </p>
      */
     public List<patient> getAllPatients() throws SQLException {
         List<patient> patients = new ArrayList<>();
